@@ -1,0 +1,32 @@
+  Activating project at `~/acorn-julia2/acorn-julia`
+Run parameters:
+  run_name: mod_RE_mod_elec_iter0
+  GenX file: Combined_Capacity_S1_Mod_RE_Mod_Elec
+  GenX downscaled file: Selected_CPA_Capacity_Mod_RE_Mod_Elec
+  GenX iter: 0
+  Busprop file: boyuan
+  Genprop file: boyuan
+  Branchprop file: boyuan
+  Climate scenario years: historical_1980_2019
+  Sim years: [1982, 1987]
+  Exclude external zones: 1
+  Include new HVDC: 0
+  Save name: nyiso_only
+Now running year 1982...
+ERROR: LoadError: ArgumentError: "/home/fs01/jl2966/acorn-julia2/runs/mod_RE_mod_elec_iter0/inputs/load_historical_1980_2019.csv" is not a valid file or doesn't exist
+Stacktrace:
+ [1] CSV.Context(source::CSV.Arg, header::CSV.Arg, normalizenames::CSV.Arg, datarow::CSV.Arg, skipto::CSV.Arg, footerskip::CSV.Arg, transpose::CSV.Arg, comment::CSV.Arg, ignoreemptyrows::CSV.Arg, ignoreemptylines::CSV.Arg, select::CSV.Arg, drop::CSV.Arg, limit::CSV.Arg, buffer_in_memory::CSV.Arg, threaded::CSV.Arg, ntasks::CSV.Arg, tasks::CSV.Arg, rows_to_check::CSV.Arg, lines_to_check::CSV.Arg, missingstrings::CSV.Arg, missingstring::CSV.Arg, delim::CSV.Arg, ignorerepeated::CSV.Arg, quoted::CSV.Arg, quotechar::CSV.Arg, openquotechar::CSV.Arg, closequotechar::CSV.Arg, escapechar::CSV.Arg, dateformat::CSV.Arg, dateformats::CSV.Arg, decimal::CSV.Arg, groupmark::CSV.Arg, truestrings::CSV.Arg, falsestrings::CSV.Arg, stripwhitespace::CSV.Arg, type::CSV.Arg, types::CSV.Arg, typemap::CSV.Arg, pool::CSV.Arg, downcast::CSV.Arg, lazystrings::CSV.Arg, stringtype::CSV.Arg, strict::CSV.Arg, silencewarnings::CSV.Arg, maxwarnings::CSV.Arg, debug::CSV.Arg, parsingdebug::CSV.Arg, validate::CSV.Arg, streaming::CSV.Arg)
+   @ CSV ~/.julia/packages/CSV/XLcqT/src/context.jl:314
+ [2] #File#32
+   @ ~/.julia/packages/CSV/XLcqT/src/file.jl:222 [inlined]
+ [3] CSV.File(source::String)
+   @ CSV ~/.julia/packages/CSV/XLcqT/src/file.jl:162
+ [4] #read#118
+   @ ~/.julia/packages/CSV/XLcqT/src/CSV.jl:117 [inlined]
+ [5] read
+   @ ~/.julia/packages/CSV/XLcqT/src/CSV.jl:113 [inlined]
+ [6] run_acorn(run_name::String, climate_scenario::String, sim_year::Int64, branchprop_name::String, busprop_name::String, if_lim_name::String; exclude_external_zones::Bool, include_new_hvdc::Bool, storage_eff::Float64)
+   @ Main ~/acorn-julia2/acorn-julia/src/julia/acorn.jl:35
+ [7] top-level scope
+   @ ~/acorn-julia2/acorn-julia/scripts/04_run_acorn.jl:99
+in expression starting at /home/fs01/jl2966/acorn-julia2/acorn-julia/scripts/04_run_acorn.jl:89

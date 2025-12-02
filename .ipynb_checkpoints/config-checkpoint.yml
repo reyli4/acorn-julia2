@@ -1,0 +1,14 @@
+# Model configuration
+
+# MAKE SURE INTERNALLY CONSISTENT
+genX_file_name: "Combined_Capacity_S2_Low_RE_Mod_Elec"
+genX_downscaled_file_name: "Selected_CPA_Capacity_Low_RE_Mod_Elec"
+genX_iter: 0
+busprop_name: "boyuan"
+genprop_name: "boyuan"
+branchprop_name: "boyuan"
+climate_scenario_years: "historical_1980_2019"
+sim_years: [1982, 2019]
+resstock_upgrade: 1
+comstock_upgrade: 31
+run_name: "low_RE_mod_elec_iter0"

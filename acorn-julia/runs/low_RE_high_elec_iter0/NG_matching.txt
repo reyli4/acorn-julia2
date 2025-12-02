@@ -1,0 +1,84 @@
+Starting capacity matching process...
+
+Capacity comparison:
+Zone | Current (MW) | Target (MW) | Difference (MW)
+-------------------------------------------------------
+A    |       393.0 |      536.8 |         143.8
+Zone A: Added 3 duplicate generators, increasing capacity by 155.0 MW (target: 143.8 MW)
+B    |       109.0 |      269.1 |         160.1
+Zone B: Added 4 duplicate generators, increasing capacity by 195.0 MW (target: 160.1 MW)
+C    |      1709.0 |     1672.9 |         -36.1
+Zone C: Retired 1 generators, reducing capacity by 110.0 MW (target: 36.1 MW)
+D    |       346.0 |      371.0 |          25.0
+Zone D: Added 1 duplicate generators, increasing capacity by 142.0 MW (target: 25.0 MW)
+E    |       206.0 |      201.6 |          -4.4
+Zone E: Retired 1 generators, reducing capacity by 45.0 MW (target: 4.4 MW)
+F    |      3159.0 |     3797.5 |         638.5
+Zone F: Added 4 duplicate generators, increasing capacity by 751.0 MW (target: 638.5 MW)
+G    |      1761.0 |     2015.0 |         254.0
+Zone G: Added 2 duplicate generators, increasing capacity by 726.0 MW (target: 254.0 MW)
+H    |         0.0 |        0.0 |           0.0
+I    |         0.0 |        0.0 |           0.0
+J    |      6487.0 |     5978.2 |        -508.8
+Zone J: Retired 11 generators, reducing capacity by 518.0 MW (target: 508.8 MW)
+K    |      3652.0 |     1616.7 |       -2035.3
+Zone K: Retired 24 generators, reducing capacity by 2302.0 MW (target: 2035.3 MW)
+
+============================================================
+VALIDATION RESULTS
+============================================================
+Zone | Original (MW) | Target (MW) | Final (MW) | Error (MW)
+-----------------------------------------------------------------
+A    |        393.0 |      536.8 |     548.0 |      11.2
+B    |        109.0 |      269.1 |     304.0 |      34.9
+C    |       1709.0 |     1672.9 |    1599.0 |     -73.9
+D    |        346.0 |      371.0 |     488.0 |     117.0
+E    |        206.0 |      201.6 |     161.0 |     -40.6
+F    |       3159.0 |     3797.5 |    3910.0 |     112.5
+G    |       1761.0 |     2015.0 |    2487.0 |     472.0
+H    |          0.0 |        0.0 |       0.0 |       0.0
+I    |          0.0 |        0.0 |       0.0 |       0.0
+J    |       6487.0 |     5978.2 |    5969.0 |      -9.2
+K    |       3652.0 |     1616.7 |    1350.0 |    -266.7
+Starting capacity matching process...
+
+Capacity comparison:
+Zone | Current (MW) | Target (MW) | Difference (MW)
+-------------------------------------------------------
+A    |       393.0 |      536.8 |         143.8
+Zone A: Added 3 duplicate generators, increasing capacity by 151.0 MW (target: 143.8 MW)
+B    |       109.0 |      269.1 |         160.1
+Zone B: Added 3 duplicate generators, increasing capacity by 175.0 MW (target: 160.1 MW)
+C    |      1709.0 |     1672.9 |         -36.1
+Zone C: Retired 1 generators, reducing capacity by 110.0 MW (target: 36.1 MW)
+D    |       346.0 |      371.0 |          25.0
+Zone D: Added 1 duplicate generators, increasing capacity by 142.0 MW (target: 25.0 MW)
+E    |       206.0 |      201.6 |          -4.4
+Zone E: Retired 1 generators, reducing capacity by 45.0 MW (target: 4.4 MW)
+F    |      3159.0 |     3797.5 |         638.5
+Zone F: Added 4 duplicate generators, increasing capacity by 699.0 MW (target: 638.5 MW)
+G    |      1761.0 |     2015.0 |         254.0
+Zone G: Added 3 duplicate generators, increasing capacity by 688.0 MW (target: 254.0 MW)
+H    |         0.0 |        0.0 |           0.0
+I    |         0.0 |        0.0 |           0.0
+J    |      6487.0 |     5978.2 |        -508.8
+Zone J: Retired 11 generators, reducing capacity by 518.0 MW (target: 508.8 MW)
+K    |      3652.0 |     1616.7 |       -2035.3
+Zone K: Retired 24 generators, reducing capacity by 2302.0 MW (target: 2035.3 MW)
+
+============================================================
+VALIDATION RESULTS
+============================================================
+Zone | Original (MW) | Target (MW) | Final (MW) | Error (MW)
+-----------------------------------------------------------------
+A    |        393.0 |      536.8 |     544.0 |       7.2
+B    |        109.0 |      269.1 |     284.0 |      14.9
+C    |       1709.0 |     1672.9 |    1599.0 |     -73.9
+D    |        346.0 |      371.0 |     488.0 |     117.0
+E    |        206.0 |      201.6 |     161.0 |     -40.6
+F    |       3159.0 |     3797.5 |    3858.0 |      60.5
+G    |       1761.0 |     2015.0 |    2449.0 |     434.0
+H    |          0.0 |        0.0 |       0.0 |       0.0
+I    |          0.0 |        0.0 |       0.0 |       0.0
+J    |       6487.0 |     5978.2 |    5969.0 |      -9.2
+K    |       3652.0 |     1616.7 |    1350.0 |    -266.7

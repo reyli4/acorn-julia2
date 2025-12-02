@@ -1,0 +1,19 @@
+[project]
+name = "acorn-julia"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "dask-labextension>=7.0.0",
+    "geopandas>=1.0.1",
+    "numpy>=2.2.3",
+    "openpyxl>=3.1.5",
+    "salem>=0.3.11",
+    "scikit-learn>=1.6.1",
+    "seaborn>=0.13.2",
+    "xarray[io,parallel,viz]>=2025.1.2",
+]
+
+[tool.uv]
+package = true

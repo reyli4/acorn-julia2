@@ -1,0 +1,14 @@
+.ipynb_checkpoints/
+__pycache__/
+*.egg-info/
+data/climate/
+data/nrel/
+data/hydro/
+data/load/
+out/
+runs/*/logs/
+runs/*/inputs/
+runs/*/outputs/
+julia_sandbox.ipynb
+python_sandbox.ipynb
+build/
