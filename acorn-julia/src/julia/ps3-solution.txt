@@ -1,0 +1,15 @@
+PS3 Capacity Expansion with Storage (Wind/Solar + 4-hr Battery)
+Status: OPTIMAL
+Objective value: 2.708512162163629e9
+
+Installed generation capacities (MW):
+  WIND: 7516.7211
+  SOLAR: 5141.8884
+
+Installed storage power capacities (MW):
+  FOUR: 15980.5397
+
+Installed storage energy capacities (MWh):
+  FOUR: 63922.1589
+
+Total load shed (MWh): 23064.6636

@@ -107,7 +107,7 @@ function run_model(scenario, year, gen_prop_name, branch_prop_name, bus_prop_nam
     @variable(model, bus_angle[1:n_bus, 1:nt])
     @variable(model, charge[1:length(storage_bus_ids), 1:nt])
     @variable(model, discharge[1:length(storage_bus_ids), 1:nt])
-    @variable(model, batt_state[1:length(storage_bus_ids), 1:nt+1])
+    @variable(model, storage_state[1:length(storage_bus_ids), 1:nt+1])
     @variable(model, load_shedding[1:n_bus, 1:nt])
 
     ## Constraints 
@@ -162,17 +162,17 @@ function run_model(scenario, year, gen_prop_name, branch_prop_name, bus_prop_nam
     # Battery state dynamics for all time steps
     for t in 1:nt
         # Battery state dynamics for all but the last storage bus
-        @constraint(model, batt_state[1:end-1, t+1] .== batt_state[1:end-1, t] .+ sqrt(storage_eff) .* charge[1:end-1, t] .- (1 / sqrt(storage_eff)) .* discharge[1:end-1, t])
+        @constraint(model, storage_state[1:end-1, t+1] .== storage_state[1:end-1, t] .+ sqrt(storage_eff) .* charge[1:end-1, t] .- (1 / sqrt(storage_eff)) .* discharge[1:end-1, t])
 
         # Battery state dynamics Gilboa
-        @constraint(model, batt_state[end, t+1] .== batt_state[end, t] .+ sqrt(gilboa_eff) .* charge[end, t] .- (1 / sqrt(gilboa_eff)) .* discharge[end, t])
+        @constraint(model, storage_state[end, t+1] .== storage_state[end, t] .+ sqrt(gilboa_eff) .* charge[end, t] .- (1 / sqrt(gilboa_eff)) .* discharge[end, t])
     end
 
     # Battery capacity constraints
-    @constraint(model, 0.0 .* storage_cap .<= batt_state .<= storage_cap)
+    @constraint(model, 0.0 .* storage_cap .<= storage_state .<= storage_cap)
 
     # Initial battery state (assuming 30% of capacity)
-    @constraint(model, batt_state[:, 1] .== 0.3 .* storage_cap[:, 1])
+    @constraint(model, storage_state[:, 1] .== 0.3 .* storage_cap[:, 1])
 
     # Interface flow constraints
     # Internal limits set to infinity if desired
@@ -274,7 +274,7 @@ function run_model(scenario, year, gen_prop_name, branch_prop_name, bus_prop_nam
         flow_result = value.(flow)
         charge_result = value.(charge)
         discharge_result = value.(discharge)
-        batt_state_result = value.(batt_state)
+        storage_state_result = value.(storage_state)
         load_shedding_result = value.(load_shedding)
         wind_curtail_result = value.(wc)
         solar_curtail_result = value.(sc)
@@ -294,6 +294,6 @@ function run_model(scenario, year, gen_prop_name, branch_prop_name, bus_prop_nam
     CSV.write("$(out_path)/disch_$(year).csv", DataFrame(discharge_result, :auto), header=false)
     CSV.write("$(out_path)/wind_curtailment_$(year).csv", DataFrame(wind_curtail_result, :auto), header=false)
     CSV.write("$(out_path)/solar_curtailment_$(year).csv", DataFrame(solar_curtail_result, :auto), header=false)
-    CSV.write("$(out_path)/batt_state_$(year).csv", DataFrame(batt_state_result, :auto), header=false)
+    CSV.write("$(out_path)/storage_state_$(year).csv", DataFrame(storage_state_result, :auto), header=false)
     CSV.write("$(out_path)/load_shedding_$(year).csv", DataFrame(load_shedding_result, :auto), header=false)
 end

@@ -1,7 +1,8 @@
 #!/bin/bash
 #SBATCH --job-name=acorn_run
 #SBATCH --nodes=1
-#SBATCH --ntasks=10
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=10
 #SBATCH --time=06:00:00
 #SBATCH --mem=20GB
 #SBATCH --output=logs/out-%A.txt
@@ -14,6 +15,7 @@ echo "Starting job at $(date)"
 # Load Gurobi
 module load gurobi/11.0.3
 export GRB_THREADS=10
+export GRB_LICENSE_FILE="/home/fs01/jl2966/acorn-julia2/gurobi.lic"
 
 # Constants
 PROJECT_DIR="/home/fs01/jl2966/acorn-julia2/acorn-julia"

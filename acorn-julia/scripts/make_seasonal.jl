@@ -7,15 +7,17 @@ const RUN_NAME    = "low_RE_mod_elec_iter0"
 const RUN_DIR     = "$(PROJECT_DIR)/runs/$(RUN_NAME)"
 const INPUTS      = "$(RUN_DIR)/inputs"
 
-const TOTAL_CHARGE_MW = 6000.0        
+const TOTAL_CHARGE_MW = 6000.0
 const TOTAL_ENERGY_MWH = 13360
 
-const RATE_CH  = 1.0
-const RATE_DIS = 1.0
-const EFF      = 0.75             
-const INIT_SOC = 0.30               
-const END_SOC  = 0.0               
-const DISC_COST= 0.0                
+# Seasonal behavior defaults (set only duration; keep other defaults reasonable)
+const DURATION_HOURS = 24.0 * 90.0  # 3 months
+const RATE_CH  = 1.0 / DURATION_HOURS
+const RATE_DIS = 1.0 / DURATION_HOURS
+const EFF      = 0.75
+const INIT_SOC = 0.30
+const END_SOC  = 0.0
+const DISC_COST= 0.0
 
 # ---------- helper: choose target bus list ----------
 function load_busprop()
@@ -117,10 +119,13 @@ end
 # ---------- builder for the seasonal CSV ----------
 function make_seasonal_csv(outpath::String; template::DataFrame)
     n = nrow(template)
+    # Keep placement and power capacity identical to the base template,
+    # but scale energy to enforce the target duration.
+    storage_capacity_mwh = template.charge_capacity_MW .* DURATION_HOURS
     df = DataFrame(
         bus_id = template.bus_id,
         charge_capacity_MW   = template.charge_capacity_MW,
-        storage_capacity_mwh = template.storage_capacity_mwh,
+        storage_capacity_mwh = storage_capacity_mwh,
         is_seasonal = ones(Int, n),
         max_charge_rate_frac    = fill(RATE_CH,  n),
         max_discharge_rate_frac = fill(RATE_DIS, n),
@@ -144,6 +149,6 @@ end
 #b, w = strat_near_renewables()
 
 mkpath(INPUTS)
-out = "$(INPUTS)/seasonal_zoneA_test_stage0.csv"   # change per run to keep files distinct
+out = "$(INPUTS)/seasonal_zoneA_test_stage1_3month.csv"   # change per run to keep files distinct
 base_template = CSV.read("$(INPUTS)/storage_assignment.csv", DataFrame)
 make_seasonal_csv(out; template=base_template)
