@@ -47,11 +47,6 @@ function parse_commandline()
             help = "File in run_dir/inputs for SEASONAL storage (default: seasonal_storage_assignment.csv)"
             arg_type = String
             default = "seasonal_storage_assignment.csv"
-        "--seasonal_rate_caps_on"
-            help = "Apply seasonal C-rate constraints? 0=no,1=yes (default 1)"
-            arg_type = Int
-            default = 1
-
     end
     return parse_args(s)
 end
@@ -70,7 +65,6 @@ save_name = args["save_name"]
 storage_filename=args["storage_filename"]
 seasonal_on_int = args["seasonal_on"]
 seasonal_filename = args["seasonal_filename"]
-seasonal_rate_caps_on = convert(Bool, args["seasonal_rate_caps_on"])
 seasonal_on = convert(Bool, seasonal_on_int)
 
 println("Run parameters:")
@@ -78,7 +72,6 @@ println("  Save name: $(save_name)")
 println("  Storage file: $(storage_filename)")
 println("  Seasonal on?: $(seasonal_on)")
 println("  Seasonal file: $(seasonal_filename)")
-println("  Seasonal rate caps on?: $(seasonal_rate_caps_on)")
 println("  Seasonal SOC floor on?: removed (always off in Stage 0 build)")
 
 # Load custom functions
@@ -143,6 +136,6 @@ for sim_year in sim_years[1]:sim_years[2]
         storage_filename=storage_filename,   #NEW
         seasonal_on=seasonal_on,          # NEW
         seasonal_filename=seasonal_filename,   # NEW
-        seasonal_rate_caps_on=seasonal_rate_caps_on,
+        first_sim_year=sim_years[1],
     )
 end

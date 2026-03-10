@@ -1,8 +1,8 @@
 #!/bin/bash
 #SBATCH --job-name=acorn_run
-#SBATCH --nodes=1
-#SBATCH --ntasks=1
-#SBATCH --cpus-per-task=10
+#SBATCH --nodes=10
+#SBATCH --ntasks=10
+#SBATCH --cpus-per-task=20
 #SBATCH --time=06:00:00
 #SBATCH --mem=20GB
 #SBATCH --output=logs/out-%A.txt
@@ -13,9 +13,8 @@
 echo "Starting job at $(date)"
 
 # Load Gurobi
-module load gurobi/11.0.3
-export GRB_THREADS=10
-export GRB_LICENSE_FILE="/home/fs01/jl2966/acorn-julia2/gurobi.lic"
+module load gurobi/13.0.0
+export GRB_THREADS=20
 
 # Constants
 PROJECT_DIR="/home/fs01/jl2966/acorn-julia2/acorn-julia"
@@ -27,7 +26,8 @@ echo "Run directory: $RUN_DIR"
 # Run script
 # ------------
 # NYISO ONLY
-julia $PROJECT_DIR/scripts/04_run_acorn.jl \
+CPUS=${SLURM_CPUS_PER_TASK:-20}
+srun -c ${CPUS} julia $PROJECT_DIR/scripts/04_run_acorn.jl \
 --project-dir $PROJECT_DIR \
 --run-dir $RUN_DIR \
 --if_lim_name vivienne_2023_paper \
@@ -36,7 +36,7 @@ julia $PROJECT_DIR/scripts/04_run_acorn.jl \
 --save_name nyiso_only
 
 # NYISO + EXTERNAL ZONES
-julia $PROJECT_DIR/scripts/04_run_acorn.jl \
+srun -c ${CPUS} julia $PROJECT_DIR/scripts/04_run_acorn.jl \
 --project-dir $PROJECT_DIR \
 --run-dir $RUN_DIR \
 --if_lim_name vivienne_2023_paper \
@@ -59,8 +59,6 @@ exit 0
 
 
     
-
-
 
 
 

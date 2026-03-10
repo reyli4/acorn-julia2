@@ -1,14 +1,4 @@
-# ps3.jl
-#
-# Technology sets (generators, storage) come from CSV files
-#
-# Required input files in the working directory (or in /home/fs01/jl2966):
-#   - ps3-data.csv        (columns include: hour, demand, plus availability columns for each generator)
-#   - ps3-generators.csv  (generator, capacity_cost_gen, operating_cost)
-#   - ps3-storage.csv     (storage, capacity_cost_stor, storage_duration_hr, discharge_eff, charge_eff)
-#
-# Output:
-#   - ps3_solution.txt
+
 
 using JuMP
 using HiGHS
@@ -97,12 +87,16 @@ for r in eachrow(stor_df)
     stor_charge_eff[s]    = Float64(r.charge_eff)
 end
 
-# Hourly availability for each generator 
+# Hourly availability for each generator
 availability = Dict{Symbol, Vector{Float64}}()
 for gstr in gen_names
-    col = find_exact_column(ts_df, gstr)
     g = Symbol(gstr)
-    availability[g] = Vector{Float64}(ts_df[!, col])
+    maybe_col = filter(c -> lowercase(String(c)) == lowercase(gstr), propertynames(ts_df))
+    if length(maybe_col) == 1
+        availability[g] = Vector{Float64}(ts_df[!, maybe_col[1]])
+    else
+        availability[g] = ones(T)
+    end
 end
 
 # --------------------------
@@ -113,6 +107,11 @@ model = Model(HiGHS.Optimizer)
 # Investment variables
 @variable(model, x_gen[g in G] >= 0)   
 @variable(model, x_stor[s in S] >= 0)  
+
+# PS4(a): existing nuclear can only be retained/retired from 600 MW; no additional build.
+if :NUC_EXIST in G
+    @constraint(model, x_gen[:NUC_EXIST] <= 600.0)
+end
 
 # Operational variables
 @variable(model, y[g in G, t in TIME] >= 0)          
@@ -159,10 +158,10 @@ optimize!(model)
 # --------------------------
 # Reporting
 # --------------------------
-const OUT_FILE = joinpath(@__DIR__, "ps3-solution.txt")
+const OUT_FILE = joinpath(@__DIR__, "ps4-solution.txt")
 
 open(OUT_FILE, "w") do io
-    println(io, "PS3 Capacity Expansion with Storage (Wind/Solar + 4-hr Battery)")
+    println(io, "PS4 Capacity Expansion with Storage (Wind/Solar + 4-hr Battery)")
     println(io, "Status: ", termination_status(model))
     println(io, "Objective value: ", objective_value(model))
     println(io)

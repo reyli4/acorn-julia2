@@ -1,0 +1,117 @@
+PS4 Capacity Expansion Results
+Input files: ps3-data.csv, ps3-generators.csv, ps3-storage.csv
+
+=== (c) Base case with new resources ===
+Status: OPTIMAL
+Total cost ($): 887621014.2397
+Total price ($/MWh): 54.9937
+Total load shed (MWh): 0.0000
+
+Installed generation capacity (MW):
+  WIND: 1606.3309
+  SOLAR: 0.0000
+  NUC_EXIST: 600.0000
+  NUC_NEW: 0.0000
+  GAS: 1466.1193
+
+Installed storage capacity (MW):
+  FOUR: 950.3087
+
+Installed storage energy capacity (MWh):
+  FOUR: 3801.2347
+
+Generation by type (MWh and share):
+  WIND: 6041489.0436 MWh (37.33%)
+  SOLAR: -0.0000 MWh (-0.00%)
+  NUC_EXIST: 5037834.1192 MWh (31.13%)
+  NUC_NEW: 0.0000 MWh (0.00%)
+  GAS: 5106014.8244 MWh (31.55%)
+
+=== (d) ITC case: WIND/SOLAR investment cost = 60,000 $/MW-yr ===
+Status: OPTIMAL
+Total cost ($): 753498842.3150
+Total price ($/MWh): 46.6840
+Total load shed (MWh): 991.8109
+
+Installed generation capacity (MW):
+  WIND: 2399.3005
+  SOLAR: 1014.7424
+  NUC_EXIST: 600.0000
+  NUC_NEW: 0.0000
+  GAS: 1316.9317
+
+Installed storage capacity (MW):
+  FOUR: 413.3708
+
+Installed storage energy capacity (MWh):
+  FOUR: 1653.4831
+
+Generation by type (MWh and share):
+  WIND: 8393935.5956 MWh (51.88%)
+  SOLAR: 1062162.5639 MWh (6.56%)
+  NUC_EXIST: 3614437.9258 MWh (22.34%)
+  NUC_NEW: 0.0000 MWh (0.00%)
+  GAS: 3110129.7821 MWh (19.22%)
+
+=== (e) PTC case: WIND/SOLAR operating cost = -30 $/MWh ===
+Status: OPTIMAL
+Total cost ($): 633519273.8117
+Total price ($/MWh): 39.2505
+Total load shed (MWh): 0.0000
+
+Installed generation capacity (MW):
+  WIND: 2864.0890
+  SOLAR: 0.0000
+  NUC_EXIST: 600.0000
+  NUC_NEW: 0.0000
+  GAS: 1310.7736
+
+Installed storage capacity (MW):
+  FOUR: 1398.4484
+
+Installed storage energy capacity (MWh):
+  FOUR: 5593.7935
+
+Generation by type (MWh and share):
+  WIND: 10060217.1099 MWh (60.69%)
+  SOLAR: 0.0000 MWh (0.00%)
+  NUC_EXIST: 3503301.6060 MWh (21.13%)
+  NUC_NEW: 0.0000 MWh (0.00%)
+  GAS: 3013511.6960 MWh (18.18%)
+
+=== (f) Carbon tax case: GAS operating cost = 200 $/MWh ===
+Status: OPTIMAL
+Total cost ($): 1314168127.1838
+Total price ($/MWh): 81.4209
+Total load shed (MWh): 0.0000
+
+Installed generation capacity (MW):
+  WIND: 2928.1299
+  SOLAR: 679.9522
+  NUC_EXIST: 600.0000
+  NUC_NEW: 319.9881
+  GAS: 832.4769
+
+Installed storage capacity (MW):
+  FOUR: 1984.5489
+
+Installed storage energy capacity (MWh):
+  FOUR: 7938.1956
+
+Generation by type (MWh and share):
+  WIND: 9907110.2680 MWh (60.83%)
+  SOLAR: 724663.6191 MWh (4.45%)
+  NUC_EXIST: 3027630.9543 MWh (18.59%)
+  NUC_NEW: 1609606.0339 MWh (9.88%)
+  GAS: 1016335.3106 MWh (6.24%)
+
+Price comparisons:
+  (d) vs (c): 46.6840 vs 54.9937 $/MWh (change = -8.3097)
+  (f) vs (c): 81.4209 vs 54.9937 $/MWh (change = 26.4273)
+  (f) vs (d): 81.4209 vs 46.6840 $/MWh (change = 34.7370)
+
+Part (e) storage behavior note:
+  Hours with simultaneous charging and discharging: 2058 out of 8760
+  This can occur because charging and discharging are separate nonnegative LP variables
+  with no non-simultaneity constraint; negative renewable operating costs can make cycling
+  within the same hour economically attractive in the linear relaxation.

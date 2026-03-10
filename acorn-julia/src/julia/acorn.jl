@@ -20,7 +20,10 @@ function run_acorn(
     storage_filename::String="storage_assignment.csv",  # NEW
     seasonal_on::Bool=false,  # NEW
     seasonal_filename::String="seasonal_storage_assignment.csv",    # NEW
-    seasonal_rate_caps_on::Bool=true,   # toggle extra seasonal constraints
+    first_sim_year::Int=sim_year,
+    carryover_base_file::Union{Nothing,String}=nothing,
+    carryover_seasonal_file::Union{Nothing,String}=nothing,
+    output_suffix::Union{Nothing,String}=nothing,
     )
 
 
@@ -30,6 +33,7 @@ function run_acorn(
     data_directory = "$(project_path)/data"
     run_directory = "$(project_path)/runs/$(run_name)"
     out_path = "$(run_directory)/outputs/$(climate_scenario)/$(save_name)"
+    run_token = isnothing(output_suffix) ? string(sim_year) : output_suffix
     
     if !isdir(out_path)
         mkpath(out_path)
@@ -79,7 +83,6 @@ function run_acorn(
     println("DEBUG storage total rows = ", nrow(storage))
     println("DEBUG storage columns = ", names(storage))
     println("DEBUG storage column type = ", eltype(names(storage)))
-    println("DEBUG seasonal_rate_caps_on = ", seasonal_rate_caps_on)
 
     if :is_seasonal ∈ names(storage) || "is_seasonal" ∈ names(storage)
 
@@ -130,10 +133,73 @@ function run_acorn(
     eff_vec         = getvec(:eff,                     storage_eff)
     init_soc_vec    = getvec(:init_soc,                0.30)
     end_soc_min_vec = getvec(:end_soc_min,             0.0)
-    # Optional C-rate caps (fractions of energy capacity per hour).
-    # Defaults impose no extra rate limit if columns are absent.
-    max_charge_rate_frac    = getvec(:max_charge_rate_frac,    Inf)
-    max_discharge_rate_frac = getvec(:max_discharge_rate_frac, Inf)
+    # C-rate fraction columns removed; charge_capacity_MW is the rate limit.
+
+    # --- Optional carry-over SOC from previous year (if output exists) ---
+    function _read_end_soc(path::String)
+        if !isfile(path)
+            return Dict{Int, Float64}()
+        end
+        df = CSV.read(path, DataFrame; header=false)
+        if nrow(df) == 0
+            return Dict{Int, Float64}()
+        end
+        if df[1, 1] == "bus_id"
+            header = Vector{String}(df[1, :])
+            df = df[2:end, :]
+            rename!(df, Symbol.(header))
+        end
+        if nrow(df) == 0
+            return Dict{Int, Float64}()
+        end
+        bus_col = (:bus_id in names(df)) ? :bus_id : names(df)[1]
+        end_col = names(df)[end]
+        bus_ids = [Int(round(parse(Float64, string(v)))) for v in df[!, bus_col]]
+        end_vals = [parse(Float64, string(v)) for v in df[!, end_col]]
+        return Dict(bus_ids[i] => end_vals[i] for i in eachindex(bus_ids))
+    end
+
+    explicit_carryover = !isnothing(carryover_base_file) || !isnothing(carryover_seasonal_file)
+    if explicit_carryover
+        prev_base_path = isnothing(carryover_base_file) ? "" : carryover_base_file
+        prev_seasonal_path = isnothing(carryover_seasonal_file) ? "" : carryover_seasonal_file
+    else
+        prev_year = sim_year - 1
+        prev_base_path = "$(out_path)/storage_state_base_$(prev_year).csv"
+        prev_seasonal_path = "$(out_path)/storage_state_seasonal_$(prev_year).csv"
+    end
+
+    if (sim_year > first_sim_year || explicit_carryover) && (isfile(prev_base_path) || isfile(prev_seasonal_path))
+        if explicit_carryover
+            println("DEBUG: using explicit carry-over SOC files:")
+            println("DEBUG carryover base file = ", prev_base_path)
+            println("DEBUG carryover seasonal file = ", prev_seasonal_path)
+        else
+            println("DEBUG: using carry-over SOC from year $(sim_year - 1)")
+        end
+        base_end = _read_end_soc(prev_base_path)
+        seasonal_end = _read_end_soc(prev_seasonal_path)
+        bus_col = :bus_id ∈ names(storage) ? :bus_id : "bus_id"
+        bus_ids = storage[!, bus_col]
+        energy_cap_vec = getvec(:storage_capacity_mwh, 0.0)
+        for i in 1:n_s
+            cap = energy_cap_vec[i]
+            if cap <= 0
+                continue
+            end
+            bus_id = Int(round(parse(Float64, string(bus_ids[i]))))
+            if storage.is_seasonal[i] == 1
+                if haskey(seasonal_end, bus_id)
+                    init_soc_vec[i] = seasonal_end[bus_id] / cap
+                end
+            else
+                if haskey(base_end, bus_id)
+                    init_soc_vec[i] = base_end[bus_id] / cap
+                end
+            end
+        end
+        init_soc_vec = clamp.(init_soc_vec, 0.0, 1.0)
+    end
 
 
 
@@ -262,6 +328,16 @@ function run_acorn(
     n_branch = size(branchprop, 1)
 
     model = Model(Gurobi.Optimizer)
+    # Honor GRB_THREADS if set; otherwise Gurobi decides.
+    try
+        grb_threads = parse(Int, get(ENV, "GRB_THREADS", "0"))
+        if grb_threads > 0
+            set_optimizer_attribute(model, "Threads", grb_threads)
+            println("DEBUG Gurobi Threads = ", grb_threads)
+        end
+    catch
+        # no-op if env var is missing/invalid
+    end
 
     # Indices of storage rows (requires storage.is_seasonal already set earlier)
     seasonal_storage_idx = findall(==(1), storage.is_seasonal)
@@ -282,9 +358,6 @@ function run_acorn(
     base_end_soc_min_vec = end_soc_min_vec[base_storage_idx]
     seasonal_end_soc_min_vec = end_soc_min_vec[seasonal_storage_idx]
 
-    seasonal_max_charge_rate_frac = max_charge_rate_frac[seasonal_storage_idx]
-    seasonal_max_discharge_rate_frac = max_discharge_rate_frac[seasonal_storage_idx]
-
     ## Define variables
     @variable(model, pg[1:n_gen, 1:nt])
     @variable(model, flow[1:n_branch, 1:nt])
@@ -299,17 +372,7 @@ function run_acorn(
     @variable(model, load_shedding[1:n_bus, 1:nt])
 
 
-    # Per-hour C-rate caps for seasonal assets (MW <= rate_frac * MWh)
-    if seasonal_on && seasonal_rate_caps_on && !isempty(seasonal_storage_idx)
-        @constraint(model,
-            charge_seasonal[:, 1:nt] .<=
-                seasonal_max_charge_rate_frac .* seasonal_energy_cap[:, 1:nt]
-        )
-        @constraint(model,
-            discharge_seasonal[:, 1:nt] .<=
-                seasonal_max_discharge_rate_frac .* seasonal_energy_cap[:, 1:nt]
-        )
-    end
+    # C-rate fraction caps removed; charge_capacity_MW is the rate limit.
 
     # Seasonal throughput cap (cycles per year)
     # Limits total seasonal discharge to cycles_per_year * total seasonal energy capacity
@@ -375,10 +438,11 @@ function run_acorn(
 
 
     # Storage constraints
-    @constraint(model, 0 .<= charge_base .<= base_charge_cap)
-    @constraint(model, 0 .<= discharge_base .<= base_charge_cap)
-    @constraint(model, 0 .<= charge_seasonal .<= seasonal_charge_cap)
-    @constraint(model, 0 .<= discharge_seasonal .<= seasonal_charge_cap)
+    # Charge/discharge upper-bounds are intentionally muted for this experiment.
+    @constraint(model, 0 .<= charge_base)
+    @constraint(model, 0 .<= discharge_base)
+    @constraint(model, 0 .<= charge_seasonal)
+    @constraint(model, 0 .<= discharge_seasonal)
 
     # Storage state dynamics (per-row efficiency)
     for t in 1:nt
@@ -394,11 +458,11 @@ function run_acorn(
 
     # Capacity bounds + SOC boundary conditions
     @constraint(model, 0.0 .* base_energy_cap .<= storage_state_base .<= base_energy_cap)
-    @constraint(model, storage_state_base[:, 1]    .== base_init_soc_vec    .* base_energy_cap[:, 1])
+    @constraint(model, storage_state_base[:, 1] .== base_init_soc_vec .* base_energy_cap[:, 1])
     @constraint(model, storage_state_base[:, nt+1] .>= base_end_soc_min_vec .* base_energy_cap[:, nt+1])
 
     @constraint(model, 0.0 .* seasonal_energy_cap .<= storage_state_seasonal .<= seasonal_energy_cap)
-    @constraint(model, storage_state_seasonal[:, 1]    .== seasonal_init_soc_vec    .* seasonal_energy_cap[:, 1])
+    @constraint(model, storage_state_seasonal[:, 1] .== seasonal_init_soc_vec .* seasonal_energy_cap[:, 1])
     @constraint(model, storage_state_seasonal[:, nt+1] .>= seasonal_end_soc_min_vec .* seasonal_energy_cap[:, nt+1])
 
     # Impose interface limits
@@ -503,18 +567,21 @@ function run_acorn(
     solar_curt = Matrix(solar_upv[:, sim_dates]) .- solar_gen
 
     # Objective function: Minimize load shedding and storage operation costs
-    λ = 0.01  # Appendix D anti-simultaneous charge/discharge penalty
-    seasonal_penalty_frac = 15  # fraction of λ applied to seasonal storage usage
+    # Storage penalty is lambda_frac * (load shedding penalty)
+    load_shed_penalty = 10000.0
+    lambda_frac = 0.05
+    λ_base = lambda_frac * load_shed_penalty
+    lambda1 = 2  # seasonal multiplier relative to base storage penalty
 
     base_usage = sum(charge_base) + sum(discharge_base)
     seasonal_usage = sum(charge_seasonal) + sum(discharge_seasonal)
-    seasonal_penalty = seasonal_on ? seasonal_penalty_frac : 1.0
-    seasonal_term = λ * seasonal_penalty * seasonal_usage
+    seasonal_multiplier = seasonal_on ? lambda1 : 1.0
+    seasonal_term = λ_base * seasonal_multiplier * seasonal_usage
 
     @objective(model, Min,
-     10000 * sum(load_shedding) +
+     load_shed_penalty * sum(load_shedding) +
      sum(gencost .* pg) +
-     λ * base_usage +
+     λ_base * base_usage +
      seasonal_term)
 
 
@@ -608,19 +675,19 @@ function run_acorn(
     load_data_out = vcat(hcat(["bus_id" "zone"], reshape(sim_dates, 1, :)), load_data_out)
 
     # Save results as CSV files
-    CSV.write("$(out_path)/gen_$(sim_year).csv", DataFrame(pg_result, :auto), header=false)
-    CSV.write("$(out_path)/flow_$(sim_year).csv", DataFrame(flow_result, :auto), header=false)
-    CSV.write("$(out_path)/charge_$(sim_year).csv", DataFrame(charge_result, :auto), header=false)
-    CSV.write("$(out_path)/discharge_$(sim_year).csv", DataFrame(discharge_result, :auto), header=false)
-    CSV.write("$(out_path)/wind_curtailment_$(sim_year).csv", DataFrame(wind_curtail_result, :auto), header=false)
-    CSV.write("$(out_path)/solar_curtailment_$(sim_year).csv", DataFrame(solar_curtail_result, :auto), header=false)
-    CSV.write("$(out_path)/storage_state_$(sim_year).csv", DataFrame(storage_state_result, :auto), header=false)
-    CSV.write("$(out_path)/charge_base_$(sim_year).csv", DataFrame(charge_base_out, :auto), header=false)
-    CSV.write("$(out_path)/discharge_base_$(sim_year).csv", DataFrame(discharge_base_out, :auto), header=false)
-    CSV.write("$(out_path)/storage_state_base_$(sim_year).csv", DataFrame(storage_state_base_out, :auto), header=false)
-    CSV.write("$(out_path)/charge_seasonal_$(sim_year).csv", DataFrame(charge_seasonal_out, :auto), header=false)
-    CSV.write("$(out_path)/discharge_seasonal_$(sim_year).csv", DataFrame(discharge_seasonal_out, :auto), header=false)
-    CSV.write("$(out_path)/storage_state_seasonal_$(sim_year).csv", DataFrame(storage_state_seasonal_out, :auto), header=false)
-    CSV.write("$(out_path)/load_shedding_$(sim_year).csv", DataFrame(load_shedding_result, :auto), header=false)
-    CSV.write("$(out_path)/residual_load_$(sim_year).csv", DataFrame(load_data_out, :auto), header=false)
+    CSV.write("$(out_path)/gen_$(run_token).csv", DataFrame(pg_result, :auto), header=false)
+    CSV.write("$(out_path)/flow_$(run_token).csv", DataFrame(flow_result, :auto), header=false)
+    CSV.write("$(out_path)/charge_$(run_token).csv", DataFrame(charge_result, :auto), header=false)
+    CSV.write("$(out_path)/discharge_$(run_token).csv", DataFrame(discharge_result, :auto), header=false)
+    CSV.write("$(out_path)/wind_curtailment_$(run_token).csv", DataFrame(wind_curtail_result, :auto), header=false)
+    CSV.write("$(out_path)/solar_curtailment_$(run_token).csv", DataFrame(solar_curtail_result, :auto), header=false)
+    CSV.write("$(out_path)/storage_state_$(run_token).csv", DataFrame(storage_state_result, :auto), header=false)
+    CSV.write("$(out_path)/charge_base_$(run_token).csv", DataFrame(charge_base_out, :auto), header=false)
+    CSV.write("$(out_path)/discharge_base_$(run_token).csv", DataFrame(discharge_base_out, :auto), header=false)
+    CSV.write("$(out_path)/storage_state_base_$(run_token).csv", DataFrame(storage_state_base_out, :auto), header=false)
+    CSV.write("$(out_path)/charge_seasonal_$(run_token).csv", DataFrame(charge_seasonal_out, :auto), header=false)
+    CSV.write("$(out_path)/discharge_seasonal_$(run_token).csv", DataFrame(discharge_seasonal_out, :auto), header=false)
+    CSV.write("$(out_path)/storage_state_seasonal_$(run_token).csv", DataFrame(storage_state_seasonal_out, :auto), header=false)
+    CSV.write("$(out_path)/load_shedding_$(run_token).csv", DataFrame(load_shedding_result, :auto), header=false)
+    CSV.write("$(out_path)/residual_load_$(run_token).csv", DataFrame(load_data_out, :auto), header=false)
 end
