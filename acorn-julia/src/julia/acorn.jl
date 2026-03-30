@@ -571,7 +571,7 @@ function run_acorn(
     load_shed_penalty = 10000.0
     lambda_frac = 0.05
     λ_base = lambda_frac * load_shed_penalty
-    lambda1 = 2  # seasonal multiplier relative to base storage penalty
+    lambda1 = 3.5 # seasonal multiplier relative to base storage penalty
 
     base_usage = sum(charge_base) + sum(discharge_base)
     seasonal_usage = sum(charge_seasonal) + sum(discharge_seasonal)
@@ -625,7 +625,7 @@ function run_acorn(
     end
 
     ### Save results to files
-    # Add bus/branch IDs and datetime to output files
+    # Add bus/branch IDs and datetime to output files 
     flow_result = hcat([branchprop[:, "F_BUS"] branchprop[:, "FROM_ZONE"]], flow_result)
     flow_result = hcat([branchprop[:, "T_BUS"] branchprop[:, "TO_ZONE"]], flow_result)
     flow_result = vcat(hcat(["from_bus" "from_bus_zone" "to_bus" "to_bus_zone"], reshape(sim_dates, 1, :)), flow_result)
